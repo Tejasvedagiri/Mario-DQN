@@ -19,7 +19,7 @@ state_size = (24,24,3)
 input_shape = (24,24,1)
 action_size = env.action_space.n
 agent = AI(state_size, action_size,input_shape)
-if mario-dqn.ht in os.listdir():
+if "mario-dqn.h5" in os.listdir():
     agent.load("mario-dqn.h5")
 done = False
 batch_size = 32
