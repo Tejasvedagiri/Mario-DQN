@@ -16,10 +16,15 @@ from tensorflow.python.keras.optimizers import Adam
 from skimage.transform import resize
 from skimage.color import rgb2gray
 
+import logging
+logger = logging.getLogger("mario")
+        
+
 class AI:
 
     def __init__(self, state_size, action_size,input_shape):
         
+        logger.info("Starting AI")
         self.state_size = state_size
         self.action_size = action_size
         self.input_shape = input_shape
@@ -30,10 +35,11 @@ class AI:
         self.epsilon_decay = 0.9995
         self.learning_rate = 0.001
         self.model = self._build_model()
-    
+        self.count = 0
 
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
+        logger.info("Building Model")
         model = Sequential()
         model.add(Conv2D(filters = 128, kernel_size = (3,3), activation = "relu", input_shape = self.input_shape))
         model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -55,6 +61,8 @@ class AI:
         model.add(Dense(self.action_size, activation='linear'))
         model.compile(loss='mse',
                       optimizer=Adam(lr=self.learning_rate))
+        logging.debug("Built Network")
+        logging.debug(model.summary())
         return model
 
     def remember(self, state, action, reward, next_state, done):
@@ -69,6 +77,8 @@ class AI:
         return np.argmax(act_values[0])  # returns action
 
     def replay(self, batch_size):
+        #logger.debug("Training Model")
+        self.count = self.count + 1  
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
             target = reward
@@ -80,8 +90,11 @@ class AI:
             self.model.fit(state, target_f, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+            if self.count % 100 == 0:
+                logger.info("Espilon Decay :- {}".format(self.epsilon))
 
     def load(self, name):
+        logger.info("Loading Model")
         self.model.load_weights(name)
 
     def save(self, name):
