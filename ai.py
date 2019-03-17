@@ -22,10 +22,9 @@ logger = logging.getLogger("mario")
 
 class AI:
 
-    def __init__(self, state_size, action_size, input_shape, batch_size = 32):
+    def __init__(self, action_size, input_shape, batch_size = 32):
         
         logger.info("Starting AI")
-        self.state_size = state_size
         self.action_size = action_size
         self.input_shape = input_shape
         self.memory = deque(maxlen=2000)
@@ -105,13 +104,17 @@ class AI:
     def getModel(self):
         return self.model
 
+
     def image_resize(self,state):
-        resized_image = resize(state, self.state_size, anti_aliasing=True)
+        resized_image = resize(state, self.input_shape, anti_aliasing=True)
         return resized_image
 
     def to_gray_scale(self,state):
-        gray_img = rgb2gray(state).reshape(self.state_size[0],self.state_size[1],1)
+        gray_img = rgb2gray(state).reshape(self.input_shape[0],self.input_shape[1],1)
         return gray_img
 
-    def resize_and_gray(self,state):
-        return self.to_gray_scale(self.image_resize(state))
+    def resize_and_gray(self,state,gray_Flag):
+        if len(state) == 3 and gray_Flag:
+            state = rgb2gray(state).reshape(self.input_shape[0],self.input_shape[1],1)
+        state = resize(state, self.input_shape, anti_aliasing=True)
+        return state
