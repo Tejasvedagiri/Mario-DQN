@@ -22,7 +22,7 @@ logger = logging.getLogger("mario")
 
 class AI:
 
-    def __init__(self, state_size, action_size,input_shape):
+    def __init__(self, state_size, action_size, input_shape, batch_size = 32):
         
         logger.info("Starting AI")
         self.state_size = state_size
@@ -32,9 +32,10 @@ class AI:
         self.gamma = 0.95    # discount rate
         self.epsilon = 1.0  # exploration rate
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.9995
+        self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model()
+        self.batch_size = batch_size
         self.count = 0
 
     def _build_model(self):
@@ -70,16 +71,17 @@ class AI:
 
     def action(self, state):
         return np.argmax(self.model.predict(state))
+    
     def act(self, state):
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])  # returns action
 
-    def replay(self, batch_size):
-        #logger.debug("Training Model")
+    def replay(self):
+        logger.debug("Training Model")
         self.count = self.count + 1  
-        minibatch = random.sample(self.memory, batch_size)
+        minibatch = random.sample(self.memory, self.batch_size)
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
@@ -113,4 +115,3 @@ class AI:
 
     def resize_and_gray(self,state):
         return self.to_gray_scale(self.image_resize(state))
-        

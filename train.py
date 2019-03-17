@@ -23,11 +23,11 @@ env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
 state_size = (24,24,3)
 input_shape = (24,24,1)
 action_size = env.action_space.n
-agent = AI(state_size, action_size,input_shape)
+batch_size = 128
+agent = AI(state_size, action_size, input_shape, batch_size)
 if "mario-dqn.h5" in os.listdir():
     agent.load("mario-dqn.h5")
 done = False
-batch_size = 32
 
 Epoch = 1000
 
@@ -36,20 +36,19 @@ for e in range(Epoch):
     state = agent.resize_and_gray(state)
     state = np.reshape(state, [1, input_shape[0],input_shape[1],input_shape[2]])
     logger.info("Creating Observation ")
-    for state_count in range(500):
-#        env.render()
+    for state_count in range(1,500):
+        env.render()
         logger.info("Sate no {}".format(state_count))
         action = agent.act(state)
         next_state, reward, done, _ = env.step(action)
-        reward = reward if not done else -10
         next_state = agent.resize_and_gray(next_state)
         next_state = np.reshape(next_state, [1, input_shape[0],input_shape[1],input_shape[2]])
         agent.remember(state, action, reward, next_state, done)
         state = next_state
         if done:
             break
-        if len(agent.memory) > batch_size:
-            agent.replay(batch_size)
+        if state_count % batch_size == 0:
+            agent.replay()
         if state_count % 100 == 0:
             logging.info("Saving Model")
             agent.save("mario-dqn.h5")
