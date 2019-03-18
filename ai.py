@@ -9,12 +9,8 @@ import random
 import numpy as np
 from collections import deque
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout, Flatten
-from tensorflow.python.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.python.keras.layers import Dense, Dropout
 from tensorflow.python.keras.optimizers import Adam
-
-from skimage.transform import resize
-from skimage.color import rgb2gray
 
 import logging
 logger = logging.getLogger("mario")
@@ -41,10 +37,10 @@ class AI:
         # Neural Net for Deep-Q learning Model
         logger.info("Building Model")
         model = Sequential()
-        model.add(Conv2D(filters = 128, kernel_size = (3,3), activation = "relu", input_shape = self.input_shape))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Conv2D(filters = 64, kernel_size = (3,3), activation = "relu"))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        #model.add(Conv2D(filters = 128, kernel_size = (3,3), activation = "relu", input_shape = self.input_shape))
+        #model.add(MaxPooling2D(pool_size=(2, 2)))
+        #model.add(Conv2D(filters = 64, kernel_size = (3,3), activation = "relu"))
+        #model.add(MaxPooling2D(pool_size=(2, 2)))
         #model.add(Dropout(0.25))
 
         #model.add(Conv2D(filters = 64, kernel_size = (3,3), activation = "relu"))
@@ -52,13 +48,13 @@ class AI:
         #model.add(MaxPooling2D(pool_size=(2, 2)))
         #model.add(Dropout(0.25))
 
-        model.add(Flatten())
-        model.add(Dense(128, activation='relu'))
+        #model.add(Flatten())
+        model.add(Dense(units = 32, activation='relu',input_shape = self.input_shape))
         model.add(Dropout(0.2))
-        model.add(Dense(units = 64, activation='relu'))
+        model.add(Dense(units = 32, activation='relu'))
         model.add(Dropout(0.2))
-        model.add(Dense(24, activation='relu'))
-        model.add(Dense(self.action_size, activation='linear'))
+        model.add(Dense(12, activation='relu'))
+        model.add(Dense(self.action_size, activation='sigmoid'))
         model.compile(loss='mse',
                       optimizer=Adam(lr=self.learning_rate))
         logging.debug("Built Network")
@@ -87,11 +83,11 @@ class AI:
                 target = (reward + self.gamma *
                           np.amax(self.model.predict(next_state)[0]))
             target_f = self.model.predict(state)
-            target_f[0][action] = target
+            target_f[0][0][action] = target
             self.model.fit(state, target_f, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-            if self.count % 100 == 0:
+            if self.count % 5 == 0:
                 logger.info("Espilon Decay :- {}".format(self.epsilon))
 
     def load(self, name):
@@ -104,17 +100,3 @@ class AI:
     def getModel(self):
         return self.model
 
-
-    def image_resize(self,state):
-        resized_image = resize(state, self.input_shape, anti_aliasing=True)
-        return resized_image
-
-    def to_gray_scale(self,state):
-        gray_img = rgb2gray(state).reshape(self.input_shape[0],self.input_shape[1],1)
-        return gray_img
-
-    def resize_and_gray(self,state,gray_Flag):
-        if len(state) == 3 and gray_Flag:
-            state = rgb2gray(state).reshape(self.input_shape[0],self.input_shape[1],1)
-        state = resize(state, self.input_shape, anti_aliasing=True)
-        return state
